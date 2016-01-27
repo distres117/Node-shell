@@ -1,6 +1,5 @@
 var command = require('./command.js');
 
-
 // Output a prompt
 process.stdout.write('prompt > ');
 

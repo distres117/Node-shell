@@ -1,4 +1,5 @@
 var fs = require('fs');
+var request = require('request');
 // var myCommand = function(data){
 // 	var input = data.toString().trim();
 // 	var output;
@@ -89,6 +90,13 @@ module.exports = {
 			}
 			cb(arr.join("\n"));
 		}, arg);
+	},
+	curl: function(cb, arg) {
+		request("http://www."+arg,function(error, response, body){
+			if (!error){
+				cb(body);
+			}
+		})
 	}
 }
 
