@@ -44,7 +44,6 @@ function Response(cmd, arg, queue){
 Response.prototype.getNext = function(){
 	if (this.cmdQueue.length){
 		//Get next command in the queue
-		this.arg = null;
 		this.command = this.cmdQueue.shift();
 		runCommand(this);
 	}

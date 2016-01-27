@@ -2,15 +2,17 @@ var fs = require('fs');
 var request = require('request');
 
 
-function readFile(cb, filename){ 
-	fs.readFile(filename, "utf8", function(err, file){
-		if (err)
-			throw new Error(err.message);
-		cb(file);
-	})
+function readFile(cb,input){
+	if (!input.return){
+		fs.readFile(input.arg, "utf8", function(err, file){
+			if (err)
+				throw new Error(err.message);
+			cb(file);
+		})
+	}
+	else
+		cb(input.return);
 }
-
-
 
 
 module.exports = {
@@ -39,67 +41,42 @@ module.exports = {
 		input.getNext();
 	},
 	cat: function(input){
-		if (input.arg)
-			readFile(_cat, input.arg);
-		else
-			_cat(input.return);
-		function _cat(data){
+		readFile(function(data){
 			input.return = data;
 			input.getNext();
-		}
+		}, input);
+		
 	},
 	head: function(input){
-		if (input.arg)
-			readFile(_head, input.arg);
-		else
-			_head(input.return);
-		
-		function _head(data){
+		readFile(function(data){
 			var fileCut = data.split('\n').filter((it,i)=>i < 5);
 			input.return = fileCut.join('\n');
 			input.getNext();
-		}
+		}, input);
 	},
 	tail: function(input){
-		if (input.arg)
-			readFile(_tail, input.arg)
-		else
-			_tail(input.return);
-		function _tail(data){
+		readFile(function(data){
 			var fileCut = data.split('\n').filter((it,i,ar)=>i > ar.length -6);
 			input.return = fileCut.join('\n');
 			input.getNext();
-		}
-
+		}, input);
 	},
 	sort: function(input){
-		if (input.arg)
-			readFile(_sort, input.arg);
-		else
-			_sort(input.return);
-		function _sort(data){
+		readFile(function(data){
 			var fileCut = data.split('\n').sort();
 			input.return = fileCut.join("\n");
 			input.getNext();
-		}
+		}, input);
 	},
 	wc: function(input){
-		if (input.arg)
-			readFile(_wc, input.arg)
-		else
-			_wc(input.return);
-		function _wc(data){
+		readFile(function(data){
 			var fileLength = data.split('\n').length;
 			input.return = fileLength.toString();
 			input.getNext();
-		}
+		}, input);
 	},
 	uniq: function(input){
-		if (input.arg)
-			readFile(_uniq, input.arg);
-		else
-			_uniq(input.return);
-		function _uniq(data){
+		readFile(function(data){
 			var arr = [];
 			var lines = data.split('\n');
 			var lastLine;
@@ -111,7 +88,8 @@ module.exports = {
 			}
 			input.return = arr.join("\n");
 			input.getNext();
-		}
+		}, input);
+
 	},
 	curl: function(input) {
 		request("http://www."+ input.arg,function(error, response, body){
