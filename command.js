@@ -1,17 +1,7 @@
 var fs = require('fs');
 var request = require('request');
-// var myCommand = function(data){
-// 	var input = data.toString().trim();
-// 	var output;
-// 	if (input==="pwd"){
-// 		output = process.cwd();
-// 	};
-// 	if (input==="date"){
-// 		output = new Date().toString();
-// 	};
-// 	process.stdout.write(output || "Invalid entry");	
-//   ;
-// }
+
+
 function readFile(cb, filename){ 
 	fs.readFile(filename, "utf8", function(err, file){
 		if (err)
@@ -24,63 +14,94 @@ function readFile(cb, filename){
 
 
 module.exports = {
-	pwd: function(cb){
-		cb(process.cwd());
+	pwd: function(input){
+		input.return = process.cwd();
+		input.getNext();
 	},
-	date: function(cb){
-		cb(new Date().toString());
+	date: function(input){
+		input.return = new Date().toString();
+		input.getNext();
 	},
-	ls: function(callback){
+	ls: function(input){
 		var rtn =[];
 		fs.readdir('.', function(err, files) {
-		  if (err) throw err;
+		  if (err) 
+		  	throw err;
 		  files.forEach(function(file) {
 		    rtn.push(file);
 		  });
-			callback(rtn.join(" "));
+			input.return = rtn.join(" ");
+			input.getNext();
 		});
 	},
-	echo: function(cb, arg){
-		cb(arg);
+	echo: function(input){
+		input.return = input.arg;
+		input.getNext();
 	},
-	cat: function(cb, arg){
-		readFile(cb, arg);
+	cat: function(input){
+		if (input.arg)
+			readFile(_cat, input.arg);
+		else
+			_cat(input.return);
+		function _cat(data){
+			input.return = data;
+			input.getNext();
+		}
 	},
-	head: function(cb, arg){
-		readFile(function(file){
-			var fileCut = file.split('\n').filter(function(item, index){
-				if (index < 5)
-					return item;
-			});
-			cb(fileCut.join('\n'));
-		}, arg);
+	head: function(input){
+		if (input.arg)
+			readFile(_head, input.arg);
+		else
+			_head(input.return);
+		
+		function _head(data){
+			var fileCut = data.split('\n').filter((it,i)=>i < 5);
+			input.return = fileCut.join('\n');
+			input.getNext();
+		}
 	},
-	tail: function(cb, arg){
-		readFile(function(file){
-			var fileCut = file.split('\n').filter(function(item, index, arr){
-				if (index > arr.length-6)
-					return item;
-			});
-			cb(fileCut.join('\n'));
-		}, arg);
+	tail: function(input){
+		if (input.arg)
+			readFile(_tail, input.arg)
+		else
+			_tail(input.return);
+		function _tail(data){
+			var fileCut = data.split('\n').filter((it,i,ar)=>i > ar.length -6);
+			input.return = fileCut.join('\n');
+			input.getNext();
+		}
 
 	},
-	sort: function(cb, arg){
-		readFile(function(file){
-			var fileCut = file.split('\n').sort();
-			cb(fileCut.join("\n"));
-		}, arg);
+	sort: function(input){
+		if (input.arg)
+			readFile(_sort, input.arg);
+		else
+			_sort(input.return);
+		function _sort(data){
+			var fileCut = data.split('\n').sort();
+			input.return = fileCut.join("\n");
+			input.getNext();
+		}
 	},
-	wc: function(cb, arg){
-		readFile(function(file){
-			var fileLength = file.split('\n').length;
-			cb(fileLength.toString());
-		}, arg);
+	wc: function(input){
+		if (input.arg)
+			readFile(_wc, input.arg)
+		else
+			_wc(input.return);
+		function _wc(data){
+			var fileLength = data.split('\n').length;
+			input.return = fileLength.toString();
+			input.getNext();
+		}
 	},
-	uniq: function(cb, arg){
-		readFile(function(file){
+	uniq: function(input){
+		if (input.arg)
+			readFile(_uniq, input.arg);
+		else
+			_uniq(input.return);
+		function _uniq(data){
 			var arr = [];
-			var lines = file.split('\n');
+			var lines = data.split('\n');
 			var lastLine;
 			for (var i in lines){
 				if (lines[i] != lastLine){
@@ -88,13 +109,15 @@ module.exports = {
 					lastLine=lines[i];
 				}
 			}
-			cb(arr.join("\n"));
-		}, arg);
+			input.return = arr.join("\n");
+			input.getNext();
+		}
 	},
-	curl: function(cb, arg) {
-		request("http://www."+arg,function(error, response, body){
+	curl: function(input) {
+		request("http://www."+ input.arg,function(error, response, body){
 			if (!error){
-				cb(body);
+				input.return = body;
+				input.getNext();
 			}
 		})
 	}
