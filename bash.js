@@ -21,10 +21,19 @@ function runCommand(input){
 
 function parseInput(raw){
 	var input = raw.toString().trim();
-	var parsed = input.match(/([^\s+\|]+)/g);
+	var parsed = input.match(/(\S+)/g);
 	var command = parsed[0];
 	var arg = parsed[1];
-	var queuedCmds = parsed.slice(2);
+	var queuedCmds = [];
+	var lastItem;
+	var items = parsed.slice(2);
+	for (var i in items){
+		if (items[i] != '|' && lastItem === '|')
+			queuedCmds.push(items[i])
+		else if (items[i] != '|' && lastItem != '|')
+			queuedCmds[queuedCmds.length -1]+= " " + items[i]
+		lastItem = items[i];
+	}
 	return new Response(command, arg, queuedCmds);
 }
 
@@ -44,7 +53,13 @@ function Response(cmd, arg, queue){
 Response.prototype.getNext = function(){
 	if (this.cmdQueue.length){
 		//Get next command in the queue
-		this.command = this.cmdQueue.shift();
+		var newCommand = this.cmdQueue.shift();
+		if (newCommand.split(" ").length > 1){ //find out if next command has an argument
+			var parts = newCommand.split(" ");
+			this.arg = parts[1];
+			newCommand = parts[0];
+		}
+		this.command = newCommand;
 		runCommand(this);
 	}
 	else

@@ -1,5 +1,7 @@
 var fs = require('fs');
+var path = require('path');
 var request = require('request');
+var chalk = require('chalk');
 
 
 function readFile(cb,input){
@@ -98,8 +100,43 @@ module.exports = {
 				input.getNext();
 			}
 		})
+	},
+	find: function (input){
+		walk(input.arg, function(results){
+			input.return = results.join('\n');
+			input.getNext();
+		});
+	},
+	grep: function(input){
+		readFile(function(data){
+			var lines = data.split('\n').filter(it=> it.indexOf(input.arg) > -1);
+			input.return = lines.join('\n').replace(new RegExp(input.arg, "gm"), chalk.bold.green(input.arg));
+			input.getNext();
+		},input);	
 	}
 }
+
+function walk(dir, done) {
+  var results = [];
+  fs.readdir(dir, function(err, list) {
+    if (err) 
+    	throw new Error(err.message);
+    (function next() { 
+      if (!list.length) 
+      	return done(results);
+      var file = dir + '/' + list.shift();
+	    if (fs.statSync(file).isDirectory()) {
+	      walk(file, function(res) {
+	        results = results.concat(res);
+	        next();
+	      });
+	    } else {
+	      results.push(file);
+	      next();
+	    }
+    })();
+  });
+};
 
 
 
